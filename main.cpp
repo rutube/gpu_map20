@@ -98,11 +98,6 @@ int check_rows(const char *matrix_file, const char *relevance_file,
         return 0;
     }
 
-    if (final_rows > MAX_MATCHES) {
-        cout << "Rows count is more than " << MAX_MATCHES << endl;
-        return 0;
-    }
-
     return final_rows;
 }
 
@@ -201,6 +196,12 @@ int main(int argc, char **argv) {
 
     for(int q = 0; q < num_queries; q++) {
         rows = queries[q];
+
+        if (rows > MAX_MATCHES) {
+            cout << "Rows count is more than " << MAX_MATCHES << endl;
+            return 0;
+        }
+
         float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, matrix_offset, gpu_weights,
                                           rows, args->factors, variants);
 
