@@ -100,12 +100,13 @@ gpu_map20_args* parse_args(int argc, char **argv) {
         pointers[option_index++] = argv[optind++];
 
     }
-    args->matrix_file = pointers[0];
-    args->relevance_file = pointers[1];
-    args->weights_file = pointers[2];
     if (option_index < 3) {
         print_usage(argv[0]);
         return NULL;
     }
+
+    args->matrix_file = pointers[0];
+    args->relevance_file = pointers[1];
+    args->weights_file = pointers[2];
     return args;
 }

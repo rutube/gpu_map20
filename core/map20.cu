@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cublas_v2.h>
 #include "map20.h"
 #include "../kernels/top_n.h"
 #include "../kernels/map20.h"
@@ -6,9 +7,8 @@
 
 using namespace std;
 
-float *compute_map20(float *gpu_ranked, const char *relevance_file,
-                     const int relevance_offset, const int rows,
-                     const int variants) {
+float *compute_map20(cublasHandle_t cublas_handle, float *gpu_ranked, float* gpu_map20, const char *relevance_file,
+                     const int relevance_offset, const int rows, const int variants) {
     cout << "Loading relevance file..." << endl;
     float *relevance = load_matrix(relevance_file, relevance_offset, 1, rows);
 
@@ -37,20 +37,16 @@ float *compute_map20(float *gpu_ranked, const char *relevance_file,
     cout << "Computing Top-20 for " << rows << " rows" << endl;
     cudakernelcall(top_n, blocks, threads, gpu_ranked, gpu_relevance, rows, variants);
 
-    cout << "Computing MAP@20 for " << rows << " rows" << endl;
+    cout << "Computing AP@20 for " << rows << " rows" << endl;
     cudakernelcall(average_precision_n, blocks, threads, gpu_relevance, gpu_result, rows, variants);
 
-    cout << "Downloading result from GPU..." << endl;
-    float *result = download_from_gpu(gpu_result, variants);
-
-#ifdef SAVE_TOP
-    float* top_ranks = download_from_gpu(gpu_ranked, variants * rows);
-    save_matrix("top_ranks.bin", top_ranks, variants, rows);
-    float* top_relevance = download_from_gpu(gpu_relevance, variants * rows);
-    save_matrix("top_relevance.bin", top_relevance, variants, rows);
-#endif
+    const float alpha = 1.0;
+    cout << "Accumulate AP@20..." << endl;
+    cublascall(cublasSaxpy(cublas_handle, variants, &alpha, gpu_result, 0, gpu_map20, 0));
 
     cout << "Cleanup GPU..." << endl;
-    cleanup_gpu(&gpu_relevance, 1, &gpu_result, 1, NULL, false);
-    return result;
+    cleanup_gpu(NULL, 0, &gpu_result, 1, NULL, false);
+    cleanup_gpu(NULL, 0, &gpu_relevance, 1, NULL, false);
+
+    return gpu_map20;
 }
