@@ -1,0 +1,26 @@
+//
+// Created by tumbler on 17.11.16.
+//
+
+#ifndef GPU_MAP20_ARGPARSE_H
+#define GPU_MAP20_ARGPARSE_H
+
+
+typedef struct _gpu_map20_args {
+    char* matrix_file;
+    char* relevance_file;
+    char* weights_file;
+    int factors;
+    int matrix_offset;
+    int relevance_offset;
+    int rows;
+    int binary_flag;
+} gpu_map20_args;
+
+/// Разбирает аргументы командной строки для программы
+/// \param argc число аргументов
+/// \param argv массив указателей на входные параметры программы
+/// \return указатель на структуру с разобранными параметрами
+gpu_map20_args* parse_args(int argc, char **argv);
+
+#endif //GPU_MAP20_ARGPARSE_H
