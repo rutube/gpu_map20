@@ -92,7 +92,7 @@ gpu_map20_args* parse_args(int argc, char **argv) {
     args->binary_flag = binary_flag;
 
     option_index = 0;
-    while (optind < argc) {
+    while (optind < argc && option_index < 3) {
         pointers[option_index++] = argv[optind++];
 
     }
