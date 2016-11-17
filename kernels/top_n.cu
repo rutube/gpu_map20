@@ -1,15 +1,16 @@
-
-#include <math_functions.h>
 #include <device_launch_parameters.h>
+#include <math_functions.h>
 #include "constants.h"
 
 /*
 Сканирует результаты ранжирования, выбирает из них топ-20 лучших и возвращает
 в массив result соответствующие им значения релевантности.
 */
-__global__ void top_n(float *ranks, float *relevance, float *result, int rows){
+__global__ void top_n(float *ranks, float *relevance, int rows, int variants){
     // variant - номер обрабатываемого варианта
     int variant = blockIdx.x * blockDim.x + threadIdx.x;
+    if (variant >= variants)
+        return;
     int v_offset = variant * rows;
     int len = min(N, rows);
     float value, tmp, max_value;

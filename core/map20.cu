@@ -28,11 +28,14 @@ float *compute_map20(float *gpu_ranked, const char *relevance_file,
     float *gpu_result;
     cudacall(cudaMalloc((void **) &gpu_result, variants * sizeof(gpu_result[0])));
 
+    int threads = 50;
+    int blocks = (variants + threads / 2) / threads;
+
     cout << "Computing Top-20 for " << rows << " rows" << endl;
-    cudakernelcall(top_n, variants / 1024, 1024, gpu_ranked, gpu_relevance, gpu_result, rows);
+    cudakernelcall(top_n, blocks, threads, gpu_ranked, gpu_relevance, rows, variants);
 
     cout << "Computing MAP@20 for " << rows << " rows" << endl;
-    cudakernelcall(average_precision_n, variants / 1024, 1024, gpu_relevance, gpu_result, rows);
+    cudakernelcall(average_precision_n, blocks, threads, gpu_relevance, gpu_result, rows, variants);
 
     cout << "Downloading result from GPU..." << endl;
     float *result = download_from_gpu(gpu_result, variants);

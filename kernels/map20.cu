@@ -1,13 +1,18 @@
+#include <device_launch_parameters.h>
+#include <math_functions.h>
 #include "constants.h"
 
 /// Вычисляет AP@N с учетом указанной релевантности
 __global__ void average_precision_n(
         const float *relevance, /// [in] матрица признаков релевантности (0, 1) размера rows * variants
         float *result, /// [out] массив для сохранения AveragePrecision размера variants
-        int rows /// [in] число документов в выдаче
+        int rows, /// [in] число документов в выдаче
+        int variants /// [in] общее число вариантов
 ){
     // variant - номер обрабатываемого варианта
     int variant = blockIdx.x * blockDim.x + threadIdx.x;
+    if (variant >= variants)
+        return;
     int v_offset = variant * rows;
     int len = min(N, rows);
     float Psum = 0;

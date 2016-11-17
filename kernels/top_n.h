@@ -4,5 +4,9 @@
 
 #ifndef GPU_MAP20_TOP_N_H
 #define GPU_MAP20_TOP_N_H
-__global__ void top_n(float *ranks, float *relevance, float *result, int rows);
+
+#include <host_defines.h>
+
+__global__ void top_n(float *ranks, float *relevance, int rows, int variants);
+
 #endif //GPU_MAP20_TOP_N_H
