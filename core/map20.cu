@@ -28,7 +28,10 @@ float *compute_map20(float *gpu_ranked, const char *relevance_file,
     float *gpu_result;
     cudacall(cudaMalloc((void **) &gpu_result, variants * sizeof(gpu_result[0])));
 
-    int threads = 50;
+    // Optimal size for grid:
+    // http://stackoverflow.com/a/12921834
+
+    int threads = 256;
     int blocks = (variants + threads / 2) / threads;
 
     cout << "Computing Top-20 for " << rows << " rows" << endl;
