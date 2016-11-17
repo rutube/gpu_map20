@@ -122,7 +122,9 @@ int main(int argc, char **argv) {
     cout << "M: " << args->matrix_file << endl;
     cout << "R: " << args->relevance_file << endl;
     cout << "W: " << args->weights_file << endl;
-
+    if (args->queries_file) {
+        cout << "Q: " << args->queries_file << endl;
+    }
     cout << "factors: " << args->factors << endl;
     cout << "moffset: " << args->matrix_offset << endl;
     cout << "roffset: " << args->relevance_offset << endl;

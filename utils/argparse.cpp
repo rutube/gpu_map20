@@ -29,7 +29,8 @@ gpu_map20_args* parse_args(int argc, char **argv) {
     int c;
     int option_index = 0;
 
-    gpu_map20_args* args = (gpu_map20_args*)malloc(sizeof(gpu_map20_args)); ;
+    gpu_map20_args* args = (gpu_map20_args*)malloc(sizeof(gpu_map20_args));
+    args->queries_file = NULL;
     args->factors = 48;
     args->matrix_offset = 0;
     args->relevance_offset = 0;
@@ -48,10 +49,11 @@ gpu_map20_args* parse_args(int argc, char **argv) {
                         {"moffset", required_argument, 0,            'm'},
                         {"roffset", required_argument, 0,            'r'},
                         {"rows",    required_argument, 0,            'n'},
+                        {"queries", required_argument, 0,            'q'},
                         {"binary",  no_argument,       &binary_flag, 1},
                         {0, 0,                         0,            0}
                 };
-        c = getopt_long(argc, argv, "f:m:r:n:b",
+        c = getopt_long(argc, argv, "f:m:r:n:q:b",
                         long_options, &option_index);
         if (c == -1) break;
 
@@ -59,13 +61,6 @@ gpu_map20_args* parse_args(int argc, char **argv) {
             case 'f':
                 args->factors = atoi(optarg);
                 if (args->factors == 0) {
-                    print_usage(argv[0]);
-                    return NULL;
-                }
-                break;
-            case 'n':
-                args->rows = atoi(optarg);
-                if (args->rows == 0) {
                     print_usage(argv[0]);
                     return NULL;
                 }
@@ -84,7 +79,16 @@ gpu_map20_args* parse_args(int argc, char **argv) {
                     return NULL;
                 }
                 break;
-
+            case 'n':
+                args->rows = atoi(optarg);
+                if (args->rows == 0) {
+                    print_usage(argv[0]);
+                    return NULL;
+                }
+                break;
+            case 'q':
+                args->queries_file = optarg;
+                break;
             default:
                 break;
         }
