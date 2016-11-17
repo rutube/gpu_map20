@@ -16,6 +16,7 @@ set(SOURCE_FILES
         utils/argparse.cpp
         main.cpp
         )
-
+set (CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}
+        --Wno-deprecated-gpu-targets)
 cuda_add_executable(gpu_map20 ${SOURCE_FILES})
 cuda_add_cublas_to_target(gpu_map20)
