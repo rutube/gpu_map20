@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 3.6)
 project(gpu_map20)
 
 find_package(CUDA QUIET REQUIRED)
-message("prefix: ${CMAKE_FIND_LIBRARY_PREFIXES}")
-message("suffix: ${CMAKE_FIND_LIBRARY_SUFFIXES}")
+set(
+        CUDA_NVCC_FLAGS
+        ${CUDA_NVCC_FLAGS}
+        -Xcompiler -DADD_ -gencode arch=compute_35,code=sm_35 -gencode arch=compute_35,code=compute_35
+)
 
 set(CMAKE_CXX_STANDARD 11)
 
