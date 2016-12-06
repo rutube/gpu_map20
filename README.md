@@ -99,6 +99,7 @@ relevance.bin теперь содержит вектор релевантнос�
 
 ```
 cd $PROJECT_ROOT
-cmake `pwd`
+# нужен cmake>=3.6
+cmake -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-8.0 `pwd`
 make
 ```
