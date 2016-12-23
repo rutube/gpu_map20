@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <iostream>
+#include <stdlib.h>
 
 #include "kernels/constants.h"
 #include "utils/utils.h"
@@ -103,7 +104,7 @@ int check_rows(const char *matrix_file, const char *relevance_file,
 }
 
 
-int read_queries(const char *queries_file, int *queries[]) {
+int read_queries(const char *queries_file, int *queries[], size_t queries_offset) {
     size_t size = (size_t) fileSize(queries_file);
     if (size == 0) {
         cout << "invalid queries file" << endl;
@@ -117,6 +118,9 @@ int read_queries(const char *queries_file, int *queries[]) {
     if (!f) {
         return 0;
     }
+    size -= queries_offset;
+    if (size)
+        fseek(f, queries_offset, 0);
     cudacall(cudaMallocHost((void**) queries, size));
     fread(*queries, sizeof(int), size, f);
     fclose(f);
@@ -132,19 +136,25 @@ int main(int argc, char **argv) {
     int num_queries = 1;
     int total_rows;
     if (args->queries_file) {
-        num_queries = read_queries(args->queries_file, &queries);
-        if (num_queries == 0)
+        num_queries = read_queries(args->queries_file, &queries, args->queries_offset);
+        if (num_queries == 0){
+            cout << "queries is empty" << endl;
             return -1;
+        }
+        total_rows = args->rows;
         args->rows = 0;
         int offset = 0;
         for(int i = 0; i < num_queries; i++) {
             args->rows += queries[i];
             // transform query_row_count -> query_offset
             queries[i] = offset;
+            if (total_rows && offset >= total_rows) {
+                num_queries = i;
+                break;
+            }
             offset = args->rows;
         }
-        total_rows = check_rows(args->matrix_file, args->relevance_file, args->weights_file,
-                                args->matrix_offset, args->relevance_offset, args->rows, args->factors);
+        total_rows = offset;
 
     } else {
         cudacall(cudaMallocHost((void **)&queries, sizeof(queries[0])));
@@ -154,8 +164,10 @@ int main(int argc, char **argv) {
         queries[0] = total_rows;
     }
 
-    if (total_rows == 0)
+    if (total_rows == 0) {
+        cout << "total rows is zero" << endl;
         return -1;
+    }
 
     off_t weights_size = fileSize(args->weights_file);
     int variants = (int) (weights_size / (4 * args->factors));
@@ -169,6 +181,7 @@ int main(int argc, char **argv) {
     cout << "factors: " << args->factors << endl;
     cout << "moffset: " << args->matrix_offset << endl;
     cout << "roffset: " << args->relevance_offset << endl;
+    cout << "qoffset: " << args->queries_offset << endl;
     cout << "queries: " << num_queries << endl;
     cout << "total rows: " << total_rows << endl;
     cout << "variants:" << variants << endl;
@@ -191,7 +204,6 @@ int main(int argc, char **argv) {
 
     float *gpu_map20;
 
-    cout << "FS: " << fileSize(OUTPUT_FILENAME) << endl;
     if (args->append_flag && (fileSize(OUTPUT_FILENAME) > 0)) {
         cout << "Loading " << OUTPUT_FILENAME << "..." << endl;
         float * map20 = load_matrix(OUTPUT_FILENAME, 0, variants, 1);
@@ -203,10 +215,10 @@ int main(int argc, char **argv) {
     }
 
     cout << "Preparing ranks..." << endl;
-    float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, 0, gpu_weights,
+    float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, args->matrix_offset, gpu_weights,
                                       total_rows, args->factors, variants);
-    cout << "Loading relevance file" << endl;
-    float *relevance = load_matrix(args->relevance_file, 0, 1, total_rows);
+    cout << "Loading relevance file @ " << args->relevance_offset << endl;
+    float *relevance = load_matrix(args->relevance_file, args->relevance_offset, 1, total_rows);
 
     compute_map20(blas_handle, gpu_ranked, gpu_map20, relevance, queries, num_queries, total_rows, variants);
     cleanup_gpu(NULL, 0, &gpu_ranked, 1, NULL, false);
