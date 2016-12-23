@@ -39,6 +39,7 @@ do\
 }\
 while(0)\
 
+
 /* запуск CUDA kernel с синхронизацией и проверкой ошибок */
 #define cudakernelcall(kernel, blocks, threads, ...)\
 do\
@@ -51,7 +52,7 @@ do\
         exit(EXIT_FAILURE);\
     }\
 }\
-while(0)\
+while(0)
 
 /// загрузка float-матрицы из файла с учетом offset
 /// \param matrix_file путь до файла с данными для матрицы - float32 по строкам

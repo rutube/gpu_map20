@@ -7,10 +7,10 @@
 /// \param blas_handle - хендл библиотеки CuBLAS
 /// \param matrix_file - путь до файла с матрицей признаков
 /// \param matrix_offset - смещение в матрице признаков
-/// \param weights_file - путь до файла с весами
+/// \param gpu_weights - указатель на gpu-матрицу вариантов
 /// \param rows - число объектов выдачи
 /// \param factors - число признаков
 /// \param variants - число вариантов
 /// \return указатель на gpu-массив, содержащий матрицу matrix * weights.T (по столбцам) размера rows * variants
 float *prepare_ranks(cublasHandle_t blas_handle, const char *matrix_file, const int matrix_offset,
-                     const char *weights_file, const int rows, const int factors, const int variants);
+                     const float *gpu_weights, const int rows, const int factors, const int variants);

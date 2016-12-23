@@ -8,6 +8,7 @@
 #include "core/ranks.h"
 #include "core/map20.h"
 
+static const char *const OUTPUT_FILENAME = "map_20.bin";
 using namespace std;
 
 /**
@@ -98,22 +99,62 @@ int check_rows(const char *matrix_file, const char *relevance_file,
         return 0;
     }
 
-    if (final_rows > MAX_MATCHES) {
-        cout << "Rows count is more than " << MAX_MATCHES << endl;
+    return final_rows;
+}
+
+
+int read_queries(const char *queries_file, int *queries[]) {
+    size_t size = (size_t) fileSize(queries_file);
+    if (size == 0) {
+        cout << "invalid queries file" << endl;
         return 0;
     }
-
-    return final_rows;
+    if (size % sizeof(int)) {
+        cout << "invalid queries file size" << endl;
+        return 0;
+    }
+    FILE *f = fopen(queries_file, "rb");
+    if (!f) {
+        return 0;
+    }
+    cudacall(cudaMallocHost((void**) queries, size));
+    fread(*queries, sizeof(int), size, f);
+    fclose(f);
+    return (int) (size / sizeof(int));
 }
 
 
 int main(int argc, char **argv) {
 
     gpu_map20_args* args = parse_args(argc, argv);
+    
+    int *queries;
+    int num_queries = 1;
+    int total_rows;
+    if (args->queries_file) {
+        num_queries = read_queries(args->queries_file, &queries);
+        if (num_queries == 0)
+            return -1;
+        args->rows = 0;
+        int offset = 0;
+        for(int i = 0; i < num_queries; i++) {
+            args->rows += queries[i];
+            // transform query_row_count -> query_offset
+            queries[i] = offset;
+            offset = args->rows;
+        }
+        total_rows = check_rows(args->matrix_file, args->relevance_file, args->weights_file,
+                                args->matrix_offset, args->relevance_offset, args->rows, args->factors);
 
-    int rows = check_rows(args->matrix_file, args->relevance_file, args->weights_file, args->matrix_offset,
-                          args->relevance_offset, args->rows, args->factors);
-    if (rows == 0)
+    } else {
+        cudacall(cudaMallocHost((void **)&queries, sizeof(queries[0])));
+
+        total_rows = check_rows(args->matrix_file, args->relevance_file, args->weights_file,
+                                args->matrix_offset, args->relevance_offset, args->rows, args->factors);
+        queries[0] = total_rows;
+    }
+
+    if (total_rows == 0)
         return -1;
 
     off_t weights_size = fileSize(args->weights_file);
@@ -122,32 +163,62 @@ int main(int argc, char **argv) {
     cout << "M: " << args->matrix_file << endl;
     cout << "R: " << args->relevance_file << endl;
     cout << "W: " << args->weights_file << endl;
-
+    if (args->queries_file) {
+        cout << "Q: " << args->queries_file << endl;
+    }
     cout << "factors: " << args->factors << endl;
     cout << "moffset: " << args->matrix_offset << endl;
     cout << "roffset: " << args->relevance_offset << endl;
-    cout << "rows: " << rows << endl;
+    cout << "queries: " << num_queries << endl;
+    cout << "total rows: " << total_rows << endl;
     cout << "variants:" << variants << endl;
-    cout << (args->binary_flag ? "binary" : "text") << endl;
-
+    cout << (args->append_flag ? "appending" : "write") << " to "  << OUTPUT_FILENAME << endl;
+    cout << endl;
     cout << "Float size: " << sizeof(float) << endl;
+    cout << "Int  size: " << sizeof(int) << endl;
     cout << "Initializing GPU..." << endl;
     init_gpu();
     cout << "Initializing CuBLAS..." << endl;
     cublasHandle_t blas_handle = init_cublas();
 
+    cout << "Loading weights file..." << endl;
+    // Загружаем матрицу весов ранкера
+    // матрица <variants> x <factors> построчно
+    float *weights = load_matrix(
+            args->weights_file, 0, args->factors, variants);
+    float *gpu_weights = upload_to_gpu(
+            weights, args->factors * variants);
 
-    float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, args->matrix_offset, args->weights_file,
-                                      rows, args->factors, variants);
+    float *gpu_map20;
 
-    float *map20 = compute_map20(gpu_ranked, args->relevance_file, args->relevance_offset, rows, variants);
+    cout << "FS: " << fileSize(OUTPUT_FILENAME) << endl;
+    if (args->append_flag && (fileSize(OUTPUT_FILENAME) > 0)) {
+        cout << "Loading " << OUTPUT_FILENAME << "..." << endl;
+        float * map20 = load_matrix(OUTPUT_FILENAME, 0, variants, 1);
+        cout << "Uploading to gpu..." << endl;
+        gpu_map20 = upload_to_gpu(map20, variants);
+    } else {
+        cudacall(cudaMalloc((void**) &gpu_map20, variants * sizeof(gpu_map20[0])));
+        cudacall(cudaMemset(gpu_map20, 0, variants * sizeof(gpu_map20[0])));
+    }
 
-    // FIXME: Отладочное сохранение в файл, надо в бинарном/текстовом виде
-    // писать в stdout
-    cout << "saving to file..." << endl;
-    save_matrix("map20.bin", map20, variants, 1);
+    cout << "Preparing ranks..." << endl;
+    float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, 0, gpu_weights,
+                                      total_rows, args->factors, variants);
+    cout << "Loading relevance file" << endl;
+    float *relevance = load_matrix(args->relevance_file, 0, 1, total_rows);
 
-    cleanup_gpu(&map20, 1, &gpu_ranked, 1, NULL, true);
+    compute_map20(blas_handle, gpu_ranked, gpu_map20, relevance, queries, num_queries, total_rows, variants);
+    cleanup_gpu(NULL, 0, &gpu_ranked, 1, NULL, false);
+
+
+    cout << "Downoading from GPU..." << endl;
+    float * map20 = download_from_gpu(gpu_map20, variants);
+
+    cout << "Writing to file..." << endl;
+    save_matrix(OUTPUT_FILENAME, map20, variants, 1);
+
+    cleanup_gpu(&map20, 1, &gpu_map20, 1, blas_handle, true);
 
     free(args);
     return 0;
