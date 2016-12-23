@@ -6,14 +6,23 @@
 __global__ void average_precision_n(
         const float *relevance, /// [in] матрица признаков релевантности (0, 1) размера rows * variants
         float *result, /// [out] массив для сохранения AveragePrecision размера variants
-        int rows, /// [in] число документов в выдаче
+        int* queries, /// смещения начала каждого запроса в массиве relevance
+        int num_queries, /// общее число запросов
+        int total_rows, /// [in] общее число документов для всех запросов
         int variants /// [in] общее число вариантов
 ){
     // variant - номер обрабатываемого варианта
-    int variant = blockIdx.x * blockDim.x + threadIdx.x;
-    if (variant >= variants)
+    int global_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (global_idx >= variants * num_queries)
         return;
-    int v_offset = variant * rows;
+    int variant = global_idx / num_queries;
+    int query = global_idx % num_queries;
+    int offset = queries[query];
+    int next_offset = (query==num_queries - 1)? total_rows: queries[query + 1];
+    int rows = next_offset - offset;
+
+    relevance += offset;
+    int v_offset = variant * total_rows + offset;
     int len = min(N, rows);
     float Psum = 0;
     float Pk;
@@ -30,5 +39,5 @@ __global__ void average_precision_n(
     }
     // вычисляем и возвращаем AveragePrecision@N, в знаменателе - реальное
     // число запросов в выдаче, если их меньше N.
-    result[variant] = APsum / len;
+    result[query * num_queries + variant] = APsum / len;
 }

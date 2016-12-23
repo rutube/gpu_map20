@@ -135,8 +135,12 @@ int main(int argc, char **argv) {
         if (num_queries == 0)
             return -1;
         args->rows = 0;
+        int offset = 0;
         for(int i = 0; i < num_queries; i++) {
             args->rows += queries[i];
+            // query_row_count -> query_offset
+            queries[i] = offset;
+            offset = args->rows;
         }
         total_rows = check_rows(args->matrix_file, args->relevance_file, args->weights_file,
                                 args->matrix_offset, args->relevance_offset, args->rows, args->factors);
@@ -177,11 +181,6 @@ int main(int argc, char **argv) {
     cout << "Initializing CuBLAS..." << endl;
     cublasHandle_t blas_handle = init_cublas();
 
-    int rows = 0;
-    int matrix_offset = 0;
-    int relevance_offset = 0;
-
-
     cout << "Loading weights file..." << endl;
     // Загружаем матрицу весов ранкера
     // матрица <variants> x <factors> построчно
@@ -193,26 +192,35 @@ int main(int argc, char **argv) {
     float *gpu_map20;
     cudacall(cudaMalloc((void**) &gpu_map20, variants * sizeof(gpu_map20[0])));
     cudacall(cudaMemset(gpu_map20, 0, variants * sizeof(gpu_map20[0])));
+//
+//    for(int q = 0; q < num_queries; q++) {
+//        rows = queries[q];
+//
+//        if (rows > MAX_MATCHES) {
+//            cout << "Rows count is more than " << MAX_MATCHES << endl;
+//            return 0;
+//        }
+//
+//        float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, matrix_offset, gpu_weights,
+//                                          rows, args->factors, variants);
+//
+//        cout << "Loading relevance file @ " << relevance_offset << endl;
+//        float *relevance = load_matrix(args->relevance_file, relevance_offset, 1, rows);
+//
+//        compute_map20(blas_handle, gpu_ranked, gpu_map20, relevance, rows, variants);
+//        cleanup_gpu(NULL, 0, &gpu_ranked, 1, NULL, false);
+//        matrix_offset += rows * args->factors * sizeof(float);
+//        relevance_offset += rows * sizeof(float);
+//    }
+    cout << "Preparing ranks..." << endl;
+    float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, 0, gpu_weights,
+                                      total_rows, args->factors, variants);
+    cout << "Loading relevance file" << endl;
+    float *relevance = load_matrix(args->relevance_file, 0, 1, total_rows);
 
-    for(int q = 0; q < num_queries; q++) {
-        rows = queries[q];
+    compute_map20(blas_handle, gpu_ranked, gpu_map20, relevance, queries, num_queries, total_rows, variants);
+    cleanup_gpu(NULL, 0, &gpu_ranked, 1, NULL, false);
 
-        if (rows > MAX_MATCHES) {
-            cout << "Rows count is more than " << MAX_MATCHES << endl;
-            return 0;
-        }
-
-        float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, matrix_offset, gpu_weights,
-                                          rows, args->factors, variants);
-
-        cout << "Loading relevance file @ " << relevance_offset << endl;
-        float *relevance = load_matrix(args->relevance_file, relevance_offset, 1, rows);
-
-        compute_map20(blas_handle, gpu_ranked, gpu_map20, relevance, rows, variants);
-        cleanup_gpu(NULL, 0, &gpu_ranked, 1, NULL, false);
-        matrix_offset += rows * args->factors * sizeof(float);
-        relevance_offset += rows * sizeof(float);
-    }
 
     cout << "Downoading from GPU..." << endl;
     float * map20 = download_from_gpu(gpu_map20, variants);

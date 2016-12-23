@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import os
 import sys
 
@@ -11,7 +10,6 @@ FACTORS = 48
 
 def compute_top_20(matrix, weight):
     result = matrix.dot(weight.T)
-    rr = -(np.sort(-result)[:20])
     return np.argsort(-result)[:20]
 
 

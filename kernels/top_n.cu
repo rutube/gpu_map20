@@ -6,12 +6,19 @@
 Сканирует результаты ранжирования, выбирает из них топ-20 лучших и возвращает
 в массив result соответствующие им значения релевантности.
 */
-__global__ void top_n(float *ranks, float *relevance, int rows, int variants){
+__global__ void top_n(float *ranks, float *relevance, int* queries, int num_queries, int total_rows, int variants){
     // variant - номер обрабатываемого варианта
-    int variant = blockIdx.x * blockDim.x + threadIdx.x;
-    if (variant >= variants)
+
+    int global_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (global_idx >= variants * num_queries)
         return;
-    int v_offset = variant * rows;
+    int variant = global_idx / num_queries;
+    int query = global_idx % num_queries;
+    int offset = queries[query];
+    int next_offset = (query==num_queries - 1)? total_rows: queries[query + 1];
+    int rows = next_offset - offset;
+    relevance += offset;
+    int v_offset = variant * total_rows + offset;
     int len = min(N, rows);
     float value, tmp, max_value;
     int max_idx;

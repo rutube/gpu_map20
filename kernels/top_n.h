@@ -7,6 +7,6 @@
 
 #include <host_defines.h>
 
-__global__ void top_n(float *ranks, float *relevance, int rows, int variants);
+__global__ void top_n(float *ranks, float *relevance, int* queries, int num_queries, int total_rows, int variants);
 
 #endif //GPU_MAP20_TOP_N_H
