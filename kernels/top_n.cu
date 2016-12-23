@@ -17,7 +17,6 @@ __global__ void top_n(float *ranks, float *relevance, int* queries, int num_quer
     int offset = queries[query];
     int next_offset = (query==num_queries - 1)? total_rows: queries[query + 1];
     int rows = next_offset - offset;
-    relevance += offset;
     int v_offset = variant * total_rows + offset;
     int len = min(N, rows);
     float value, tmp, max_value;

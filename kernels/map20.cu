@@ -15,13 +15,11 @@ __global__ void average_precision_n(
     int global_idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (global_idx >= variants * num_queries)
         return;
-    int variant = global_idx / num_queries;
-    int query = global_idx % num_queries;
+    int variant = global_idx % variants;
+    int query = global_idx / variants;
     int offset = queries[query];
     int next_offset = (query==num_queries - 1)? total_rows: queries[query + 1];
     int rows = next_offset - offset;
-
-    relevance += offset;
     int v_offset = variant * total_rows + offset;
     int len = min(N, rows);
     float Psum = 0;
@@ -39,5 +37,6 @@ __global__ void average_precision_n(
     }
     // вычисляем и возвращаем AveragePrecision@N, в знаменателе - реальное
     // число запросов в выдаче, если их меньше N.
-    result[query * num_queries + variant] = APsum / len;
+    atomicAdd(&result[variant], APsum / len);
+//    result[query * variants + variant] = APsum / len;
 }

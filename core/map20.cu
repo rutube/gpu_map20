@@ -31,11 +31,11 @@ float *compute_map20(cublasHandle_t cublas_handle, float *gpu_ranked, float* gpu
     }
 
     float *gpu_result;
-    cudacall(cudaMalloc((void **) &gpu_result, num_queries * variants * sizeof(gpu_result[0])));
+    cudacall(cudaMalloc((void **) &gpu_result, variants * sizeof(gpu_result[0])));
+    cudacall(cudaMemset(gpu_result, 0, variants * sizeof(gpu_result[0])));
 
     // Optimal size for grid:
     // http://stackoverflow.com/a/12921834
-
     int threads = 256;
     int blocks = max((variants * num_queries + threads / 2) / threads, 1);
 
@@ -44,6 +44,7 @@ float *compute_map20(cublasHandle_t cublas_handle, float *gpu_ranked, float* gpu
 
     cout << "Computing AP@20 for " << total_rows << " rows in " << num_queries << " queries and " << variants
          << " variants" << endl;
+
     cudakernelcall(average_precision_n, blocks, threads, gpu_relevance, gpu_result, gpu_queries, num_queries,
                    total_rows, variants);
 
