@@ -12,5 +12,5 @@
 /// \param factors - число признаков
 /// \param variants - число вариантов
 /// \return указатель на gpu-массив, содержащий матрицу matrix * weights.T (по столбцам) размера rows * variants
-float *prepare_ranks(cublasHandle_t blas_handle, const char *matrix_file, const int matrix_offset,
+float *prepare_ranks(cublasHandle_t blas_handle, const char *matrix_file, const size_t matrix_offset,
                      const float *gpu_weights, const int rows, const int factors, const int variants);

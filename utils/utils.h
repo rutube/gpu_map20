@@ -60,7 +60,7 @@ while(0)
 /// \param width число столбцов матрицы
 /// \param height число строк матрицы
 /// \return указатель на хост-память, аллоцированный через cudaMallocGHost
-float* load_matrix(const char *matrix_file, const off_t matrix_offset,
+float* load_matrix(const char *matrix_file, const size_t matrix_offset,
                    const int width, const int height);
 
 /// сохранение float-матрицы в файл

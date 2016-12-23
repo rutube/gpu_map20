@@ -5,10 +5,10 @@
 using namespace std;
 
 
-float *prepare_ranks(cublasHandle_t cublas_handle, const char *matrix_file, const int matrix_offset,
+float *prepare_ranks(cublasHandle_t cublas_handle, const char *matrix_file, const size_t matrix_offset,
                      const float *gpu_weights, const int rows, const int factors, const int variants) {
 
-    cout << "Loading matrix file @ " << matrix_offset << "..." << endl;
+    cout << "Loading matrix file @ " << matrix_offset << " [" << factors << "*" << rows << "]" << endl;
     // Загружаем матрицу признаков поисковой выдачи
     // матрица <rows> x <factors> построчно
     float *matrix = load_matrix(matrix_file, matrix_offset, factors, rows);

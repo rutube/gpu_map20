@@ -61,6 +61,8 @@ gpu_map20_args* parse_args(int argc, char **argv) {
                         long_options, &option_index);
         if (c == -1) break;
 
+        char * next;
+
         switch (c) {
             case 'f':
                 args->factors = atoi(optarg);
@@ -70,21 +72,21 @@ gpu_map20_args* parse_args(int argc, char **argv) {
                 }
                 break;
             case 'm':
-                args->matrix_offset = atoi(optarg);
+                args->matrix_offset = strtoul(optarg, &next, 0);
                 if (args->matrix_offset == 0) {
                     print_usage(argv[0]);
                     return NULL;
                 }
                 break;
             case 'r':
-                args->relevance_offset = atoi(optarg);
+                args->relevance_offset = strtoul(optarg, &next, 0);
                 if (args->relevance_offset == 0) {
                     print_usage(argv[0]);
                     return NULL;
                 }
                 break;
             case 'o':
-                args->queries_offset = atoi(optarg);
+                args->queries_offset = strtoul(optarg, &next, 0);
                 if (args->queries_offset == 0) {
                     print_usage(argv[0]);
                     return NULL;
