@@ -49,12 +49,17 @@ if __name__ == '__main__':
     if not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    matrix, relevance, queries = generate_queries_file(count=int(sys.argv[2]))
-    weights = generate_weights(count=int(sys.argv[3]))
+    queries = int(sys.argv[2])
+    if queries:
+        matrix, relevance, queries = generate_queries_file(count=queries)
 
-    matrix.tofile(os.path.join(dirname, 'matrix.bin'))
-    relevance.tofile(os.path.join(dirname, 'relevance.bin'))
-    queries.tofile(os.path.join(dirname, 'queries.bin'))
-    weights.tofile(os.path.join(dirname, 'weights.bin'))
+        matrix.tofile(os.path.join(dirname, 'matrix.bin'))
+        relevance.tofile(os.path.join(dirname, 'relevance.bin'))
+        queries.tofile(os.path.join(dirname, 'queries.bin'))
+
+    variants = int(sys.argv[3])
+    if variants:
+        weights = generate_weights(count=variants)
+        weights.tofile(os.path.join(dirname, 'weights.bin'))
 
 

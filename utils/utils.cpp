@@ -5,7 +5,7 @@
 #include "utils.h"
 #include <stdlib.h>
 
-float* load_matrix(const char *matrix_file, const off_t matrix_offset,
+float* load_matrix(const char *matrix_file, const size_t matrix_offset,
                    const int width, const int height) {
     float* matrixHostPtr;
     FILE *f = fopen(matrix_file,"rb");

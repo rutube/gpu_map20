@@ -12,9 +12,9 @@ typedef struct _gpu_map20_args {
     char* weights_file;
     char* queries_file;
     int factors;
-    uint matrix_offset;
-    uint relevance_offset;
-    uint queries_offset;
+    size_t matrix_offset;
+    size_t relevance_offset;
+    size_t queries_offset;
     int rows;
     int append_flag;
 } gpu_map20_args;

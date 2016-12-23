@@ -131,7 +131,6 @@ int read_queries(const char *queries_file, int *queries[], size_t queries_offset
 int main(int argc, char **argv) {
 
     gpu_map20_args* args = parse_args(argc, argv);
-    
     int *queries;
     int num_queries = 1;
     int total_rows;
@@ -217,7 +216,7 @@ int main(int argc, char **argv) {
     cout << "Preparing ranks..." << endl;
     float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, args->matrix_offset, gpu_weights,
                                       total_rows, args->factors, variants);
-    cout << "Loading relevance file @ " << args->relevance_offset << endl;
+    cout << "Loading relevance file @ " << args->relevance_offset << " [ " << total_rows << "]" << endl;
     float *relevance = load_matrix(args->relevance_file, args->relevance_offset, 1, total_rows);
 
     compute_map20(blas_handle, gpu_ranked, gpu_map20, relevance, queries, num_queries, total_rows, variants);
