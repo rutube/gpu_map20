@@ -15,7 +15,7 @@ typedef struct _gpu_map20_args {
     int matrix_offset;
     int relevance_offset;
     int rows;
-    int binary_flag;
+    int append_flag;
 } gpu_map20_args;
 
 /// Разбирает аргументы командной строки для программы

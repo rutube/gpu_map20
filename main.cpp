@@ -8,6 +8,7 @@
 #include "core/ranks.h"
 #include "core/map20.h"
 
+static const char *const OUTPUT_FILENAME = "map_20.bin";
 using namespace std;
 
 /**
@@ -171,9 +172,10 @@ int main(int argc, char **argv) {
     cout << "queries: " << num_queries << endl;
     cout << "total rows: " << total_rows << endl;
     cout << "variants:" << variants << endl;
-    cout << (args->binary_flag ? "binary" : "text") << endl;
-
+    cout << (args->append_flag ? "appending" : "write") << " to "  << OUTPUT_FILENAME << endl;
+    cout << endl;
     cout << "Float size: " << sizeof(float) << endl;
+    cout << "Int  size: " << sizeof(int) << endl;
     cout << "Initializing GPU..." << endl;
     init_gpu();
     cout << "Initializing CuBLAS..." << endl;
@@ -188,8 +190,17 @@ int main(int argc, char **argv) {
             weights, args->factors * variants);
 
     float *gpu_map20;
-    cudacall(cudaMalloc((void**) &gpu_map20, variants * sizeof(gpu_map20[0])));
-    cudacall(cudaMemset(gpu_map20, 0, variants * sizeof(gpu_map20[0])));
+
+    cout << "FS: " << fileSize(OUTPUT_FILENAME) << endl;
+    if (args->append_flag && (fileSize(OUTPUT_FILENAME) > 0)) {
+        cout << "Loading " << OUTPUT_FILENAME << "..." << endl;
+        float * map20 = load_matrix(OUTPUT_FILENAME, 0, variants, 1);
+        cout << "Uploading to gpu..." << endl;
+        gpu_map20 = upload_to_gpu(map20, variants);
+    } else {
+        cudacall(cudaMalloc((void**) &gpu_map20, variants * sizeof(gpu_map20[0])));
+        cudacall(cudaMemset(gpu_map20, 0, variants * sizeof(gpu_map20[0])));
+    }
 
     cout << "Preparing ranks..." << endl;
     float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, 0, gpu_weights,
@@ -205,7 +216,7 @@ int main(int argc, char **argv) {
     float * map20 = download_from_gpu(gpu_map20, variants);
 
     cout << "Writing to file..." << endl;
-    save_matrix("map20.bin", map20, variants, 1);
+    save_matrix(OUTPUT_FILENAME, map20, variants, 1);
 
     cleanup_gpu(&map20, 1, &gpu_map20, 1, blas_handle, true);
 
