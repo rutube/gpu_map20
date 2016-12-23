@@ -206,7 +206,6 @@ int main(int argc, char **argv) {
                                           rows, args->factors, variants);
 
         compute_map20(blas_handle, gpu_ranked, gpu_map20, args->relevance_file, relevance_offset, rows, variants);
-        cout << "Cleanup GPU..." << endl;
         cleanup_gpu(NULL, 0, &gpu_ranked, 1, NULL, false);
         matrix_offset += rows * args->factors * sizeof(float);
         relevance_offset += rows * sizeof(float);

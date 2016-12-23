@@ -17,6 +17,7 @@ void print_usage(char *prog) {
     printf("--moffset <int>\tmatrix offset\n");
     printf("--roffset <int>\trelevance offset\n");
     printf("--rows <int>\tnumber of rows\n");
+    printf("--queries <file>\tquery length file\n");
     printf("--binary\toutput result as binary array\n");
     exit(1);
 }

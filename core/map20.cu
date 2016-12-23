@@ -9,7 +9,7 @@ using namespace std;
 
 float *compute_map20(cublasHandle_t cublas_handle, float *gpu_ranked, float* gpu_map20, const char *relevance_file,
                      const int relevance_offset, const int rows, const int variants) {
-    cout << "Loading relevance file..." << endl;
+    cout << "Loading relevance file @ " << relevance_offset << endl;
     float *relevance = load_matrix(relevance_file, relevance_offset, 1, rows);
 
     float *gpu_relevance;
@@ -32,9 +32,9 @@ float *compute_map20(cublasHandle_t cublas_handle, float *gpu_ranked, float* gpu
     // http://stackoverflow.com/a/12921834
 
     int threads = 256;
-    int blocks = (variants + threads / 2) / threads;
+    int blocks = max((variants + threads / 2) / threads, 1);
 
-    cout << "Computing Top-20 for " << rows << " rows" << endl;
+    cout << "Computing Top-20 for " << rows << " rows " << variants << " variants with T=" << threads << "B=" << blocks << endl;
     cudakernelcall(top_n, blocks, threads, gpu_ranked, gpu_relevance, rows, variants);
 
     cout << "Computing AP@20 for " << rows << " rows" << endl;
@@ -42,7 +42,7 @@ float *compute_map20(cublasHandle_t cublas_handle, float *gpu_ranked, float* gpu
 
     const float alpha = 1.0;
     cout << "Accumulate AP@20..." << endl;
-    cublascall(cublasSaxpy(cublas_handle, variants, &alpha, gpu_result, 0, gpu_map20, 0));
+    cublascall(cublasSaxpy(cublas_handle, variants, &alpha, gpu_result, 1, gpu_map20, 1));
 
     cout << "Cleanup GPU..." << endl;
     cleanup_gpu(NULL, 0, &gpu_result, 1, NULL, false);
