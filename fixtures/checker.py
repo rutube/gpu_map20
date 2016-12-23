@@ -50,9 +50,9 @@ if __name__ == '__main__':
         w_map.append(APsum)
 
     map = np.array(w_map)
-    print(map)
+    print("numpy: %s" % map)
 
     gpu_map = np.fromfile(sys.argv[2], dtype=np.float32)
-    print(gpu_map)
+    print("gpu:   %s" % map)
 
 

@@ -41,25 +41,11 @@ float *compute_map20(cublasHandle_t cublas_handle, float *gpu_ranked, float* gpu
 
     cout << "Computing Top-20 for " << num_queries << " queries " << variants << " variants" << endl;
     cudakernelcall(top_n, blocks, threads, gpu_ranked, gpu_relevance, gpu_queries, num_queries, total_rows, variants);
-    float * data;
 
-    cout << "queries[0]=" << queries[0] << endl;
-    cout << "total_rows=" << total_rows << endl;
-    cout << "num_queries=" << num_queries << endl;
-
-    data = download_from_gpu(gpu_ranked,  total_rows * variants);
-    for (int i=0; i< 10; i++) {
-        cout << "ranked[" << i << "] = " << data[i] << endl;
-    }
-    cout << "Computing AP@20 for " << total_rows << " rows in " << num_queries << " queries" << endl;
+    cout << "Computing AP@20 for " << total_rows << " rows in " << num_queries << " queries and " << variants
+         << " variants" << endl;
     cudakernelcall(average_precision_n, blocks, threads, gpu_relevance, gpu_result, gpu_queries, num_queries,
                    total_rows, variants);
-
-    data = download_from_gpu(gpu_result,  num_queries * variants);
-
-    cout << "ap[0] = " << data[0] << endl;
-    cout << "ap[1] = " << data[1] << endl;
-    cout << "ap[2] = " << data[2] << endl;
 
     const float alpha = 1.0;
     cout << "Accumulate AP@20..." << endl;
