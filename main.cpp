@@ -205,7 +205,10 @@ int main(int argc, char **argv) {
         float *gpu_ranked = prepare_ranks(blas_handle, args->matrix_file, matrix_offset, gpu_weights,
                                           rows, args->factors, variants);
 
-        compute_map20(blas_handle, gpu_ranked, gpu_map20, args->relevance_file, relevance_offset, rows, variants);
+        cout << "Loading relevance file @ " << relevance_offset << endl;
+        float *relevance = load_matrix(args->relevance_file, relevance_offset, 1, rows);
+
+        compute_map20(blas_handle, gpu_ranked, gpu_map20, relevance, rows, variants);
         cleanup_gpu(NULL, 0, &gpu_ranked, 1, NULL, false);
         matrix_offset += rows * args->factors * sizeof(float);
         relevance_offset += rows * sizeof(float);
