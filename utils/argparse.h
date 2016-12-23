@@ -14,6 +14,7 @@ typedef struct _gpu_map20_args {
     int factors;
     int matrix_offset;
     int relevance_offset;
+    int queries_offset;
     int rows;
     int append_flag;
 } gpu_map20_args;

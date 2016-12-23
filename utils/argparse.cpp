@@ -13,11 +13,12 @@
 void print_usage(char *prog) {
     printf("Usage: %s [options] <matrix_file> <relevance_file> <weights_file>\n", prog);
     printf("Options:\n");
+    printf("--queries <file>\tquery length file\n");
     printf("--factors <int>\tnumber of factors\n");
     printf("--moffset <int>\tmatrix offset\n");
     printf("--roffset <int>\trelevance offset\n");
+    printf("--qoffset <int>\tqueries offset\n");
     printf("--rows <int>\tnumber of rows\n");
-    printf("--queries <file>\tquery length file\n");
     printf("--append\tuse previous map_20.bin content to sum average precision\n");
     exit(1);
 }
@@ -35,6 +36,7 @@ gpu_map20_args* parse_args(int argc, char **argv) {
     args->factors = 48;
     args->matrix_offset = 0;
     args->relevance_offset = 0;
+    args->queries_offset = 0;
     args->rows = 0;
     args->append_flag = 0;
 
@@ -49,6 +51,7 @@ gpu_map20_args* parse_args(int argc, char **argv) {
                         {"factors", required_argument, 0,            'f'},
                         {"moffset", required_argument, 0,            'm'},
                         {"roffset", required_argument, 0,            'r'},
+                        {"qoffset", required_argument, 0,            'o'},
                         {"rows",    required_argument, 0,            'n'},
                         {"queries", required_argument, 0,            'q'},
                         {"append",  no_argument,       &append_flag, 1},
@@ -76,6 +79,13 @@ gpu_map20_args* parse_args(int argc, char **argv) {
             case 'r':
                 args->relevance_offset = atoi(optarg);
                 if (args->relevance_offset == 0) {
+                    print_usage(argv[0]);
+                    return NULL;
+                }
+                break;
+            case 'o':
+                args->queries_offset = atoi(optarg);
+                if (args->queries_offset == 0) {
                     print_usage(argv[0]);
                     return NULL;
                 }
