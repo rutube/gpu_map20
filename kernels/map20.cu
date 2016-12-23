@@ -38,5 +38,4 @@ __global__ void average_precision_n(
     // вычисляем и возвращаем AveragePrecision@N, в знаменателе - реальное
     // число запросов в выдаче, если их меньше N.
     atomicAdd(&result[variant], APsum / len);
-//    result[query * variants + variant] = APsum / len;
 }

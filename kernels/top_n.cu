@@ -40,6 +40,5 @@ __global__ void top_n(float *ranks, float *relevance, int* queries, int num_quer
         tmp = relevance[max_idx];
         relevance[max_idx] = relevance[k];
         relevance[k] = tmp;
-
     }
 }
